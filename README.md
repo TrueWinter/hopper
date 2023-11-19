@@ -11,7 +11,7 @@ Run `hopper.exe -help` for a list of flags and their purpose.
 Running the following command will copy all assets with names containing either `blaze` or `magma` from 1.20.1 and asset index 5 to a folder called `test`.
 
 ```
-build\hopper.exe -index 5 -version 1.20.1 -pattern blaze,magma -output test
+hopper.exe -index 5 -version 1.20.1 -pattern blaze,magma -output test
 ```
 
 This will only work if you have downloaded and opened 1.20.1 at least once.
