@@ -29,6 +29,19 @@ func parsePattern(pattern string) []string {
 	return tmpList
 }
 
+func parseLang(lang string) []string {
+	list := strings.Split(lang, ",")
+	tmpList := []string{}
+
+	for _, v := range list {
+		if v != "" {
+			tmpList = append(tmpList, v)
+		}
+	}
+
+	return tmpList
+}
+
 var outputDir *string
 
 func main() {
@@ -43,13 +56,14 @@ func main() {
 	patternTmp := flag.String("pattern", "", "Comma separated list of resource names to match")
 	noExtract := flag.Bool("noextract", false, "Skip extracting the JAR file, ignoring all resources it contains")
 	noIndex := flag.Bool("noindex", false, "Skip using the asset index, ignoring all resources it contains")
+	langTmp := flag.String("lang", "", "Comma separated list of language files name patterns to extract strings from")
 	outputDir = flag.String("output", "", "Output directory, must be empty")
 	flag.Parse()
 
 	if *index == "" && !*noIndex {
 		flag.Usage()
 		log.Fatal("Asset index version is required unless noindex is true")
-	}	
+	}
 
 	if *version == "" && !*noExtract {
 		flag.Usage()
@@ -57,6 +71,15 @@ func main() {
 	}
 
 	pattern := parsePattern(*patternTmp)
+	lang := parseLang(*langTmp)
+	for _, v := range lang {
+		pattern = append(pattern, "/lang/" + v)
+	}
+
+	if (*index == "" || *noIndex) && len(lang) > 0 {
+		flag.Usage()
+		log.Fatal("Asset index is required when extracting from language files")
+	}
 
 	if *outputDir == "" {
 		flag.Usage()
@@ -84,6 +107,10 @@ func main() {
 		log.Println("Using version:", *version)
 	}
 
+	if len(lang) > 0 {
+		log.Println("Using language name pattern:", strings.Join(lang, ","))
+	}
+
 	log.Println("Minecraft directory:", *mcDir)
 	log.Println("Patterns:", strings.Join(pattern, ", "))
 	log.Println("Output directory:", *outputDir)
@@ -96,6 +123,16 @@ func main() {
 				if strings.Contains(n, p) {
 					asset := getAssetObject(*mcDir, v.Hash)
 					defer asset.Close()
+
+					if strings.Contains(n, "/lang/") {
+						if len(lang) > 0 {
+							filtered := filterLang(*asset, pattern)
+							writeJson(n, filtered)
+						}
+
+						continue
+					}
+
 					copy(n, asset)
 				}
 			}

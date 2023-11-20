@@ -2,19 +2,19 @@
 
 Hopper is a command-line tool to extract Minecraft resources for use in resource packs.
 
-You should be familiar with the structure of resource packs and running command-line tools before using Hopper.
+You should know how to create resource packs and run command-line tools before using Hopper.
 
 # Usage
 
 Run `hopper.exe -help` for a list of flags and their purpose.
 
-Running the following command will copy all assets with names containing either `blaze` or `magma` from 1.20.1 and asset index 5 to a folder called `test`.
+Running the following command will copy all assets with names containing either `blaze` or `magma` from 1.20.1/asset index 5 to a folder called `nether`. Filtered language files (for file names containing `en`) will also be outputted.
 
 ```
-hopper.exe -index 5 -version 1.20.1 -pattern blaze,magma -output test
+hopper.exe -index 5 -version 1.20.1 -pattern blaze,magma -output nether -lang en
 ```
 
-This will only work if you have downloaded and opened 1.20.1 at least once.
+This will only work if you have downloaded and opened 1.20.1 at least once, and if the `nether` folder exists.
 
 # Disclaimer
 
