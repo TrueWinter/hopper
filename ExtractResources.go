@@ -57,6 +57,8 @@ func main() {
 	noExtract := flag.Bool("noextract", false, "Skip extracting the JAR file, ignoring all resources it contains")
 	noIndex := flag.Bool("noindex", false, "Skip using the asset index, ignoring all resources it contains")
 	langTmp := flag.String("lang", "", "Comma separated list of language files name patterns to extract strings from")
+	sounds := flag.Bool("sounds", false, "Copy filtered sounds.json file")
+	replaceSounds := flag.Bool("replacesounds", false, "Set the replace property in sounds.json to true for all sounds")
 	outputDir = flag.String("output", "", "Output directory, must be empty")
 	flag.Parse()
 
@@ -74,6 +76,15 @@ func main() {
 	lang := parseLang(*langTmp)
 	for _, v := range lang {
 		pattern = append(pattern, "/lang/" + v)
+	}
+
+	if *replaceSounds && !*sounds {
+		flag.Usage()
+		log.Fatal("The replacesounds flag cannot be used without the sounds flag")
+	}
+
+	if *sounds {
+		pattern = append(pattern, "minecraft/sounds.json")
 	}
 
 	if (*index == "" || *noIndex) && len(lang) > 0 {
@@ -124,14 +135,23 @@ func main() {
 					asset := getAssetObject(*mcDir, v.Hash)
 					defer asset.Close()
 
-					if strings.Contains(n, "/lang/") {
-						if len(lang) > 0 {
-							filtered := filterLang(*asset, pattern)
-							writeJson(n, filtered)
-						}
+					if strings.Contains(n, "/lang/") ||
+						n == "minecraft/sounds.json" {
+							if n == "minecraft/sounds.json" {
+								filtered := filterSound(*asset, pattern, *replaceSounds)
+								writeJson(n, filtered)
+							}
+							
+							if strings.Contains(n, "/lang/") {
+								if len(lang) > 0 {
+									filtered := filterLang(*asset, pattern)
+									writeJson(n, filtered)
+								}
 
-						continue
-					}
+							}
+							
+							continue
+						}
 
 					copy(n, asset)
 				}
