@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func getAssetsFromJarFile(mcDir string, version string, pattern []string) {
+func getAssetsFromJarFile(mcDir string, version string, pattern []string, exclude []string) {
 	zipFile, err := os.Open(mcDir + sep() + "versions" + sep() +
 		version + sep() + version + ".jar")
 	if err != nil {
@@ -32,6 +32,10 @@ func getAssetsFromJarFile(mcDir string, version string, pattern []string) {
 
 		// Language files are stored as hashed assets
 		if strings.Contains(f.Name, "/lang/") {
+			continue
+		}
+
+		if isExcluded(f.Name, exclude) {
 			continue
 		}
 

@@ -42,6 +42,29 @@ func parseLang(lang string) []string {
 	return tmpList
 }
 
+func parseExclude(exclude string) []string {
+	list := strings.Split(exclude, ",")
+	tmpList := []string{}
+
+	for _, v := range list {
+		if v != "" {
+			tmpList = append(tmpList, v)
+		}
+	}
+
+	return tmpList
+}
+
+func isExcluded(name string, exclusions []string) bool {
+	for _, e := range exclusions {
+		if strings.Contains(name, e) {
+			return true
+		}
+	}
+
+	return false
+}
+
 var outputDir *string
 
 func main() {
@@ -59,6 +82,7 @@ func main() {
 	langTmp := flag.String("lang", "", "Comma separated list of language files name patterns to extract strings from")
 	sounds := flag.Bool("sounds", false, "Copy filtered sounds.json file")
 	replaceSounds := flag.Bool("replacesounds", false, "Set the replace property in sounds.json to true for all sounds")
+	excludeTmp := flag.String("exclude", "", "Comma separated list of resource name patterns to exclude")
 	outputDir = flag.String("output", "", "Output directory, must be empty")
 	flag.Parse()
 
@@ -77,6 +101,8 @@ func main() {
 	for _, v := range lang {
 		pattern = append(pattern, "/lang/" + v)
 	}
+
+	exclude := parseExclude(*excludeTmp)
 
 	if *replaceSounds && !*sounds {
 		flag.Usage()
@@ -131,7 +157,7 @@ func main() {
 
 		for n, v := range assetIndex.Objects {
 			for _, p := range pattern {
-				if strings.Contains(n, p) {
+				if strings.Contains(n, p) && !isExcluded(n, exclude) {
 					asset := getAssetObject(*mcDir, v.Hash)
 					defer asset.Close()
 
@@ -160,6 +186,6 @@ func main() {
 	}
 
 	if !*noExtract {
-		getAssetsFromJarFile(*mcDir, *version, pattern)
+		getAssetsFromJarFile(*mcDir, *version, pattern, exclude)
 	}
 }
