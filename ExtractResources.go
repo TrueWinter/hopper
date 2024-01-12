@@ -131,6 +131,8 @@ func main() {
 		log.Fatal("Output directory has contents")
 	}
 
+	*outputDir = *outputDir + sep() + "assets"
+
 	if *noExtract && *noIndex {
 		flag.Usage()
 		log.Fatal("Both noextract and noindex are true")
