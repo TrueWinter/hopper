@@ -3,8 +3,13 @@ package main
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"os"
 )
+
+type ClientJson struct {
+	AssetIndex string `json:"assets"`
+}
 
 type AssetIndex struct {
 	Objects map[string]AssetIndexObject `json:"objects"`
@@ -13,6 +18,28 @@ type AssetIndex struct {
 type AssetIndexObject struct {
 	Hash string `json:"hash"`
 	Size int    `json:"size"`
+}
+
+func getAssetIndexFromVersion(mcDir string, version string) AssetIndex {
+	file, err := os.Open(mcDir + sep() + "versions" + sep() + version + sep() + version + ".json")
+	if err != nil {
+		panic(err)
+	}
+
+	clientJson := ClientJson{}
+	reader, err := io.ReadAll(file)
+	if err != nil {
+		panic(err)
+	}
+
+	err = json.Unmarshal(reader, &clientJson)
+	if err != nil {
+		panic(err)
+	}
+
+	log.Println("Using index: " + clientJson.AssetIndex)
+
+	return getAssetIndex(mcDir, clientJson.AssetIndex)
 }
 
 func getAssetIndex(mcDir string, index string) AssetIndex {

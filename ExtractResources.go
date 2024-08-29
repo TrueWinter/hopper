@@ -65,6 +65,7 @@ func isExcluded(name string, exclusions []string) bool {
 	return false
 }
 
+// outputDir is used in FileUtils
 var outputDir *string
 
 func main() {
@@ -73,7 +74,6 @@ func main() {
 		panic(appDataError)
 	}
 
-	index := flag.String("index", "", "Asset index version")
 	version := flag.String("version", "", "Minecraft version")
 	mcDir := flag.String("mcdir", appDataDir + sep() + ".minecraft", "Minecraft directory")
 	patternTmp := flag.String("pattern", "", "Comma separated list of resource names to match")
@@ -84,16 +84,12 @@ func main() {
 	replaceSounds := flag.Bool("replacesounds", false, "Set the replace property in sounds.json to true for all sounds")
 	excludeTmp := flag.String("exclude", "", "Comma separated list of resource name patterns to exclude")
 	outputDir = flag.String("output", "", "Output directory, must be empty")
+	ignoreContent := flag.Bool("ignorecontent", false, "Do not error if output directory has content")
 	flag.Parse()
 
-	if *index == "" && !*noIndex {
+	if *version == "" {
 		flag.Usage()
-		log.Fatal("Asset index version is required unless noindex is true")
-	}
-
-	if *version == "" && !*noExtract {
-		flag.Usage()
-		log.Fatal("Minecraft version is required unless noextract is true")
+		log.Fatal("Minecraft version is required")
 	}
 
 	pattern := parsePattern(*patternTmp)
@@ -110,10 +106,14 @@ func main() {
 	}
 
 	if *sounds {
+		if *noIndex {
+			log.Fatal("noindex cannot be used with sounds")
+		}
+
 		pattern = append(pattern, "minecraft/sounds.json")
 	}
 
-	if (*index == "" || *noIndex) && len(lang) > 0 {
+	if *noIndex && len(lang) > 0 {
 		flag.Usage()
 		log.Fatal("Asset index is required when extracting from language files")
 	}
@@ -128,7 +128,12 @@ func main() {
 	}
 
 	if !dirIsEmpty(*outputDir) {
-		log.Fatal("Output directory has contents")
+		msg := "Output directory has contents"
+		if *ignoreContent {
+			log.Println("Warning: " + msg)
+		} else {
+			log.Fatal(msg)
+		}
 	}
 
 	*outputDir = *outputDir + sep() + "assets"
@@ -136,10 +141,6 @@ func main() {
 	if *noExtract && *noIndex {
 		flag.Usage()
 		log.Fatal("Both noextract and noindex are true")
-	}
-
-	if !*noIndex {
-		log.Println("Using index:", *index)
 	}
 
 	if !*noExtract {
@@ -155,7 +156,7 @@ func main() {
 	log.Println("Output directory:", *outputDir)
 
 	if !*noIndex {
-		assetIndex := getAssetIndex(*mcDir, *index)
+		assetIndex := getAssetIndexFromVersion(*mcDir, *version)
 
 		for n, v := range assetIndex.Objects {
 			for _, p := range pattern {
